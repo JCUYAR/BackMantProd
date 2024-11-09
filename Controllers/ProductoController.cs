@@ -10,6 +10,7 @@ using System.Runtime.InteropServices;
 using WebAPI.Models.DTOS.ProductoResponse;
 using WebAPI.Domain.Commands.ProductoCommand;
 using WebAPI.Domain.Queries.ProductoQueries;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 
 namespace WebAPI.Controllers
@@ -94,6 +95,49 @@ namespace WebAPI.Controllers
                 })
                 .ToListAsync();
             return Ok(lista);
+        }
+
+        [HttpPut]
+        [Route("Update")]
+        public async Task<IActionResult> UpdateProducto([FromBody] UpdateProductoCommand command)
+        {
+            if (command.Id == 0)
+            {
+                return BadRequest("El parámetro Id es obligatorio y no puede ser nulo o vacío.");
+            }
+
+            var producto = await _dbpruebaContext.Productos
+                .FirstOrDefaultAsync(n => n.IdProductos == command.Id);
+
+            if (producto == null)
+            {
+                return NotFound($"Producto con ID {command.Id} no se ha encontrado");
+            }
+
+            producto.Nombre = command.Nombre;
+            producto.Marca = command.Marca;
+            producto.Precio = command.Precio;
+            producto.Stock = command.Stock;
+            producto.Estado = command.Estado;
+
+            var response = new UpdateProductoResponse
+            {
+                Nombre = producto.Nombre,
+                Marca = producto.Marca,
+                Precio = producto.Precio,
+                Stock = producto.Stock,
+                Estado = producto.Estado,
+            };
+
+            try
+            {
+                await _dbpruebaContext.SaveChangesAsync();
+                return Ok(response);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Hubo un problema al actualizar el producto: {ex.Message}");
+            }
         }
 
     }
