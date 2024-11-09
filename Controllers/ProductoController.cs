@@ -140,5 +140,34 @@ namespace WebAPI.Controllers
             }
         }
 
+        [HttpDelete]
+        [Route("Delete")]
+        public  async Task<IActionResult> DeleteProducto([FromQuery] DeleteProductoCommand command)
+        {
+            if (command.Id == 0)
+            {
+                return BadRequest("El parámetro Id es obligatorio y no puede ser nulo o vacío.");
+            }
+
+            var producto = await _dbpruebaContext.Productos
+                .FirstOrDefaultAsync(n => n.IdProductos == command.Id);
+            if (producto == null)
+            {
+                return NotFound($"Producto con ID {command.Id} no se ha encontrado");
+            }
+
+            _dbpruebaContext.Productos.Remove(producto);
+            await _dbpruebaContext.SaveChangesAsync();
+
+            var response = new DeleteProductoResponse
+            {
+                Id = command.Id,
+                Message = $"Producto con ID {command.Id} ha sido eliminado.",
+                Error = "Sin error"
+            };
+
+            return Ok(response);
+        }
+
     }
 }
